@@ -12,7 +12,7 @@ api = Api(app)
 
 @app.route('/')
 def index():
-    return '<h1>Adida Barack Pilly</h1>'
+    return '<h1>INVENTORY SYSTEM</h1>'
 class ProductResource(Resource):
     def get(self, product_id=None):
         if product_id:
