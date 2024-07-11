@@ -97,6 +97,6 @@ api.add_resource(ProductResource, '/products', '/products/<int:product_id>')
 api.add_resource(SupplierResource, '/suppliers', '/suppliers/<int:supplier_id>')
 api.add_resource(TransactionsResource, '/transactions', '/transactions/<int:transaction_id>')
 
-# if __name__ == '__main__':
-#     app.run(port=5555, debug=True)
+if __name__ == '__main__':
+    app.run(port=5555, debug=True)
 
