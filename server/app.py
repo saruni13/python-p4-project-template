@@ -5,7 +5,7 @@ from flask_restful import Resource, Api
 
 # Local imports
 from config import app, db
-from models import Product, Supplier
+from models import Product, Supplier, Transaction
 
 # Views go here!
 api = Api(app)
@@ -68,9 +68,35 @@ class SupplierResource(Resource):
         except Exception as e:
             return {'error': str(e)}, 400
 
+class TransactionsResource(Resource):
+    def get(self, transaction_id=None):
+        if transaction_id:
+            transaction = Transaction.query.all()
+            if Transaction:
+                return jsonify(transaction.to_dict())
+            return{'error': "Transaction not found!"}
+        transactions = Transaction.query.all()
+        return jsonify([transaction.to_dict() for transaction in transactions])
+    
+    def post(self):
+        data = request.get_json()
+        try:
+            new_transaction = Transaction(
+                quantity = data["quantity"],
+                product_id = data["product_id"],
+                created_at = data["created_at"]
+            )
+
+            db.session.add(new_transaction)
+            db.session.commit()
+            return jsonify(new_transaction.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
+
 api.add_resource(ProductResource, '/products', '/products/<int:product_id>')
 api.add_resource(SupplierResource, '/suppliers', '/suppliers/<int:supplier_id>')
+api.add_resource(TransactionsResource, '/transactions', '/transactions/<int:transaction_id>')
 
-if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+# if __name__ == '__main__':
+#     app.run(port=5555, debug=True)
 
