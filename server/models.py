@@ -25,8 +25,8 @@ class Product(db.Model):
     supplier_id = db.Column(db.Integer, ForeignKey('suppliers.id'))
     date = db.Column(DateTime, default=datetime.datetime.utcnow)
 
-    # supplier = db.relationship('Supplier', back_populates='products')
-    # transactions = db.relationship('Transaction', back_populates='product')
+    supplier = db.relationship('Supplier', back_populates='products')
+    transactions = db.relationship('Transaction', back_populates='product')
 
     def __repr__(self):
         return f'<Product {self.id}, {self.name}, {self.description}, {self.price}, {self.supplier_id}, {self.date}>'
@@ -38,7 +38,7 @@ class Transaction(db.Model):
     product_id = db.Column(db.Integer, ForeignKey('products.id'))
     created_at = db.Column(DateTime, default=datetime.datetime.utcnow)
 
-    # product = db.relationship('Product', back_populates='transactions')
+    product = db.relationship('Product', back_populates='transactions')
 
     def __repr__(self):
         return f'<Transaction {self.id}, {self.quantity}, {self.product_id}, {self.created_at}>'
