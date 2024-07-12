@@ -191,7 +191,7 @@ def delete_transaction(id):
 @app.route('/order', methods=['GET'])
 def get_transactions():
     order = Order.query.all()
-    return jsonify([order.__repr__() for order in order])
+    return jsonify([order.__repr__() for order in orders])
 
 @app.route('/order/<int:id>', methods=['GET'])
 def get_transaction(id):
