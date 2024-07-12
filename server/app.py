@@ -14,7 +14,7 @@ metadata = MetaData(naming_convention={
 db = SQLAlchemy(metadata=metadata)
 db.init_app(app)
 
-from models import Supplier, Product, Transaction,Order
+from models import Supplier, Product, Transaction, Order
 
 @app.route('/supplier', methods=['GET'])
 def get_suppliers():
