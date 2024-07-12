@@ -1,28 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import MetaData
+from sqlalchemy_serializer import SerializerMixin
 import datetime
-from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
 
 app = Flask(__name__)
-db = SQLAlchemy(app)
+app.config.from_pyfile('config.py')
+
+metadata = MetaData(naming_convention={
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+})
+db = SQLAlchemy(metadata=metadata)
+db.init_app(app)
 
 from models import Supplier, Product, Transaction
-
-@app.route('/supplier', methods=['POST'])
-def create_supplier():
-    data = request.get_json()
-    new_supplier = Supplier(
-        name=data['name'],
-        description=data['description']
-    )
-    db.session.add(new_supplier)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Supplier created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
 
 @app.route('/supplier', methods=['GET'])
 def get_suppliers():
@@ -35,6 +27,22 @@ def get_supplier(id):
     if not supplier:
         return jsonify({'message': 'Supplier not found'}), 404
     return jsonify(supplier.__repr__())
+
+@app.route('/supplier', methods=['POST'])
+def create_supplier():
+    data = request.get_json()
+    new_supplier = Supplier(
+        name=data['name'],
+        description=data['description'],
+        date=datetime.datetime.utcnow()
+    )
+    db.session.add(new_supplier)
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Supplier created successfully'}), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 400
 
 @app.route('/supplier/<int:id>', methods=['PUT'])
 def update_supplier(id):
@@ -64,23 +72,6 @@ def delete_supplier(id):
         db.session.rollback()
         return jsonify({'message': str(e)}), 400
 
-@app.route('/product', methods=['POST'])
-def create_product():
-    data = request.get_json()
-    new_product = Product(
-        name=data['name'],
-        description=data['description'],
-        price=data['price'],
-        supplier_id=data['supplier_id']
-    )
-    db.session.add(new_product)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Product created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
-
 @app.route('/product', methods=['GET'])
 def get_products():
     products = Product.query.all()
@@ -92,6 +83,24 @@ def get_product(id):
     if not product:
         return jsonify({'message': 'Product not found'}), 404
     return jsonify(product.__repr__())
+
+@app.route('/product', methods=['POST'])
+def create_product():
+    data = request.get_json()
+    new_product = Product(
+        name=data['name'],
+        description=data['description'],
+        price=data['price'],
+        supplier_id=data['supplier_id'],
+        date=datetime.datetime.utcnow()
+    )
+    db.session.add(new_product)
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Product created successfully'}), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 400
 
 @app.route('/product/<int:id>', methods=['PUT'])
 def update_product(id):
@@ -123,21 +132,6 @@ def delete_product(id):
         db.session.rollback()
         return jsonify({'message': str(e)}), 400
 
-@app.route('/transaction', methods=['POST'])
-def create_transaction():
-    data = request.get_json()
-    new_transaction = Transaction(
-        quantity=data['quantity'],
-        product_id=data['product_id']
-    )
-    db.session.add(new_transaction)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Transaction created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
-
 @app.route('/transaction', methods=['GET'])
 def get_transactions():
     transactions = Transaction.query.all()
@@ -149,6 +143,22 @@ def get_transaction(id):
     if not transaction:
         return jsonify({'message': 'Transaction not found'}), 404
     return jsonify(transaction.__repr__())
+
+@app.route('/transaction', methods=['POST'])
+def create_transaction():
+    data = request.get_json()
+    new_transaction = Transaction(
+        quantity=data['quantity'],
+        product_id=data['product_id'],
+        created_at=datetime.datetime.utcnow()
+    )
+    db.session.add(new_transaction)
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Transaction created successfully'}), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 400
 
 @app.route('/transaction/<int:id>', methods=['PUT'])
 def update_transaction(id):
