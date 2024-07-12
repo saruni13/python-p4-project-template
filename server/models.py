@@ -42,3 +42,21 @@ class Transaction(db.Model):
 
     def __repr__(self):
         return f'<Transaction {self.id}, {self.quantity}, {self.product_id}, {self.created_at}>'
+    
+class Order(db.Model):
+    __tablename__ = 'orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String)
+    quantity = db.Column(db.Integer)
+    price = db.Column(db.String)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    date_received = db.Column(DateTime, default=datetime.datetime.utcnow)
+
+    product = db.relationship('Product', back_populates="orders")
+    
+
+    def __repr__(self):
+        return f'<Order {self.description}, {self.description}, received on {self.date_received}>'
+    
+    
