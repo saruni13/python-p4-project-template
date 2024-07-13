@@ -1,40 +1,68 @@
-from sqlalchemy import MetaData
-from sqlalchemy.ext.associationproxy import association_proxy
-from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from flask_bcrypt import Bcrypt, check_password_hash
+from sqlalchemy import DateTime, ForeignKey, Numeric
+from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
-import datetime
-from flask_bcrypt import check_password_hash
-import re
+from config import db
 
+bcrypt = Bcrypt()
 
-metadata = MetaData(
-    naming_convention={
-        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    }
-)
+class Supplier(db.Model):
+    __tablename__ = 'suppliers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    description = db.Column(db.String)
+    date = db.Column(DateTime, default=datetime.utcnow)
 
-db = SQLAlchemy(metadata=metadata)
+    products = relationship('Product', back_populates='supplier')
 
-# Models go here!
-    
-    class Order(db.Model, SerializerMixin):
+    def __repr__(self):
+        return f'<Supplier {self.id}, {self.name}, {self.description}, {self.date}>'
+
+class Product(db.Model):
+    __tablename__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    description = db.Column(db.String)
+    price = db.Column(Numeric(10, 2))
+    supplier_id = db.Column(db.Integer, ForeignKey('suppliers.id'))
+    date = db.Column(DateTime, default=datetime.utcnow)
+
+    supplier = relationship('Supplier', back_populates='products')
+    transactions = relationship('Transaction', back_populates='product')
+    orders = relationship('Order', back_populates='product')
+
+    def __repr__(self):
+        return f'<Product {self.id}, {self.name}, {self.description}, {self.price}, {self.supplier_id}, {self.date}>'
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer)
+    product_id = db.Column(db.Integer, ForeignKey('products.id'))
+    date = db.Column(DateTime, default=datetime.utcnow)
+
+    product = relationship('Product', back_populates='transactions')
+
+    def __repr__(self):
+        return f'<Transaction {self.id}, {self.quantity}, {self.product_id}, {self.date}>'
+
+class Order(db.Model):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String)
-    quantity = db.Column(db.VarChar)
-    price = db.Column(db.Float)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    date_received = db.Column(DateTime, default=datetime.datetime.utcnow)
-    
-    product = db.relationship('Product', back_populates="orders")
-    
+    quantity = db.Column(db.Integer)
+    price = db.Column(Numeric(10, 2))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    date_received = db.Column(DateTime, default=datetime.utcnow)
+
+    product = relationship('Product', back_populates="orders")
 
     def __repr__(self):
-        return f'<Order {self.description}, {self.description}, received on {self.date_received}>'
-    
-    #Employee login
-    class User(db.Model, SerializerMixin):
+        return f'<Order {self.description}, Quantity: {self.quantity}, received on {self.date_received}>'
+
+class User(db.Model, SerializerMixin):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -42,19 +70,11 @@ db = SQLAlchemy(metadata=metadata)
     email = db.Column(db.String, nullable=False, unique=True)
     role = db.Column(db.Text)
     password = db.Column(db.String)
-    
-    
-    def validate_email(self, key, email):
-        # Simple regex for validating an Email
-        regex = r'^\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        if not re.match(regex, email):
-            raise ValueError("Invalid email address")
-        return email
 
     serialize_rules = ('-password',)
 
+    def set_password(self, plain_password):
+        self.password = bcrypt.generate_password_hash(plain_password).decode('utf-8')
+
     def check_password(self, plain_password):
-        return check_password_hash(self.password, plain_password)
-    
-    def __repr__(self):
-        return f"<User {self.id}: {self.username}>"
+        return bcrypt.check_password_hash(self.password, plain_password)
