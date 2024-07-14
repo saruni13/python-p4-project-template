@@ -1,192 +1,164 @@
+#!/usr/bin/env python3
+from models import db, Product, Supplier, Transaction, Order, User
+from flask_migrate import Migrate
+from flask_cors import CORS
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import MetaData
-from sqlalchemy_serializer import SerializerMixin
-import datetime
+from flask_restful import Api, Resource
+from flask_bcrypt import Bcrypt
+import os
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE = os.environ.get("DB_URI", f"sqlite:///{os.path.join(BASE_DIR, 'app.db')}")
 
 app = Flask(__name__)
-app.config.from_pyfile('config.py')
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.json.compact = False
 
-metadata = MetaData(naming_convention={
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-})
-db = SQLAlchemy(metadata=metadata)
+CORS(app)
+migrate = Migrate(app, db)
+bcrypt = Bcrypt(app)
 db.init_app(app)
+api = Api(app)
 
-from models import Supplier, Product, Transaction
+@app.route('/')
+def index():
+    return '<h1>Phase 4 Final Challenge</h1>'
 
-@app.route('/supplier', methods=['GET'])
-def get_suppliers():
-    suppliers = Supplier.query.all()
-    return jsonify([supplier.__repr__() for supplier in suppliers])
+class ProductResource(Resource):
+    def get(self, product_id=None):
+        if product_id:
+            product = Product.query.get(product_id)
+            if product:
+                return jsonify(product.to_dict())
+            return {'error': 'Product not found'}, 404
+        products = Product.query.all()
+        return jsonify([product.to_dict() for product in products])
 
-@app.route('/supplier/<int:id>', methods=['GET'])
-def get_supplier(id):
-    supplier = Supplier.query.get(id)
-    if not supplier:
-        return jsonify({'message': 'Supplier not found'}), 404
-    return jsonify(supplier.__repr__())
+    def post(self):
+        data = request.get_json()
+        try:
+            new_product = Product(
+                name=data["name"],
+                description=data["description"],
+                price=data["price"],
+                supplier_id=data["supplier_id"],
+                date=data["date"]
+            )
 
-@app.route('/supplier', methods=['POST'])
-def create_supplier():
-    data = request.get_json()
-    new_supplier = Supplier(
-        name=data['name'],
-        description=data['description'],
-        date=datetime.datetime.utcnow()
-    )
-    db.session.add(new_supplier)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Supplier created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+            db.session.add(new_product)
+            db.session.commit()
+            return jsonify(new_product.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
 
-@app.route('/supplier/<int:id>', methods=['PUT'])
-def update_supplier(id):
-    supplier = Supplier.query.get(id)
-    if not supplier:
-        return jsonify({'message': 'Supplier not found'}), 404
-    data = request.get_json()
-    supplier.name = data['name']
-    supplier.description = data['description']
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Supplier updated successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+class SupplierResource(Resource):
+    def get(self, supplier_id=None):
+        if supplier_id:
+            supplier = Supplier.query.get(supplier_id)
+            if supplier:
+                return jsonify(supplier.to_dict())
+            return {'error': "Supplier not found!"}, 404
+        suppliers = Supplier.query.all()
+        return jsonify([supplier.to_dict() for supplier in suppliers])
 
-@app.route('/supplier/<int:id>', methods=['DELETE'])
-def delete_supplier(id):
-    supplier = Supplier.query.get(id)
-    if not supplier:
-        return jsonify({'message': 'Supplier not found'}), 404
-    db.session.delete(supplier)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Supplier deleted successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+    def post(self):
+        data = request.get_json()
+        try:
+            new_supplier = Supplier(
+                name=data["name"],
+                description=data["description"],
+                date=data["date"]
+            )
 
-@app.route('/product', methods=['GET'])
-def get_products():
-    products = Product.query.all()
-    return jsonify([product.__repr__() for product in products])
+            db.session.add(new_supplier)
+            db.session.commit()
+            return jsonify(new_supplier.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
 
-@app.route('/product/<int:id>', methods=['GET'])
-def get_product(id):
-    product = Product.query.get(id)
-    if not product:
-        return jsonify({'message': 'Product not found'}), 404
-    return jsonify(product.__repr__())
+class TransactionResource(Resource):
+    def get(self, transaction_id=None):
+        if transaction_id:
+            transaction = Transaction.query.get(transaction_id)
+            if transaction:
+                return jsonify(transaction.to_dict())
+            return {'error': "Transaction not found!"}, 404
+        transactions = Transaction.query.all()
+        return jsonify([transaction.to_dict() for transaction in transactions])
 
-@app.route('/product', methods=['POST'])
-def create_product():
-    data = request.get_json()
-    new_product = Product(
-        name=data['name'],
-        description=data['description'],
-        price=data['price'],
-        supplier_id=data['supplier_id'],
-        date=datetime.datetime.utcnow()
-    )
-    db.session.add(new_product)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Product created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+    def post(self):
+        data = request.get_json()
+        try:
+            new_transaction = Transaction(
+                quantity=data["quantity"],
+                product_id=data["product_id"],
+                date=data["date"]
+            )
 
-@app.route('/product/<int:id>', methods=['PUT'])
-def update_product(id):
-    product = Product.query.get(id)
-    if not product:
-        return jsonify({'message': 'Product not found'}), 404
-    data = request.get_json()
-    product.name = data['name']
-    product.description = data['description']
-    product.price = data['price']
-    product.supplier_id = data['supplier_id']
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Product updated successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+            db.session.add(new_transaction)
+            db.session.commit()
+            return jsonify(new_transaction.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
 
-@app.route('/product/<int:id>', methods=['DELETE'])
-def delete_product(id):
-    product = Product.query.get(id)
-    if not product:
-        return jsonify({'message': 'Product not found'}), 404
-    db.session.delete(product)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Product deleted successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+class OrderResource(Resource):
+    def get(self, order_id=None):
+        if order_id:
+            order = Order.query.get(order_id)
+            if order:
+                return jsonify(order.to_dict())
+            return {'error': "Order not found!"}, 404
+        orders = Order.query.all()
+        return jsonify([order.to_dict() for order in orders])
 
-@app.route('/transaction', methods=['GET'])
-def get_transactions():
-    transactions = Transaction.query.all()
-    return jsonify([transaction.__repr__() for transaction in transactions])
+    def post(self):
+        data = request.get_json()
+        try:
+            new_order = Order(
+                description=data["description"],
+                quantity=data["quantity"],
+                price=data["price"],
+                product_id=data["product_id"],
+                date_received=data["date_received"]
+            )
 
-@app.route('/transaction/<int:id>', methods=['GET'])
-def get_transaction(id):
-    transaction = Transaction.query.get(id)
-    if not transaction:
-        return jsonify({'message': 'Transaction not found'}), 404
-    return jsonify(transaction.__repr__())
+            db.session.add(new_order)
+            db.session.commit()
+            return jsonify(new_order.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
 
-@app.route('/transaction', methods=['POST'])
-def create_transaction():
-    data = request.get_json()
-    new_transaction = Transaction(
-        quantity=data['quantity'],
-        product_id=data['product_id'],
-        created_at=datetime.datetime.utcnow()
-    )
-    db.session.add(new_transaction)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Transaction created successfully'}), 201
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+class UserResource(Resource):
+    def get(self, user_id=None):
+        if user_id:
+            user = User.query.get(user_id)
+            if user:
+                return jsonify(user.to_dict())
+            return {'error': "User not found!"}, 404
+        users = User.query.all()
+        return jsonify([user.to_dict() for user in users])
 
-@app.route('/transaction/<int:id>', methods=['PUT'])
-def update_transaction(id):
-    transaction = Transaction.query.get(id)
-    if not transaction:
-        return jsonify({'message': 'Transaction not found'}), 404
-    data = request.get_json()
-    transaction.quantity = data['quantity']
-    transaction.product_id = data['product_id']
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Transaction updated successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+    def post(self):
+        data = request.get_json()
+        try:
+            new_user = User(
+                name=data["name"],
+                email=data["email"],
+                role=data["role"]
+            )
+            new_user.set_password(data["password"])
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify(new_user.to_dict()), 201
+        except Exception as e:
+            return {'error': str(e)}, 400
 
-@app.route('/transaction/<int:id>', methods=['DELETE'])
-def delete_transaction(id):
-    transaction = Transaction.query.get(id)
-    if not transaction:
-        return jsonify({'message': 'Transaction not found'}), 404
-    db.session.delete(transaction)
-    try:
-        db.session.commit()
-        return jsonify({'message': 'Transaction deleted successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'message': str(e)}), 400
+api.add_resource(ProductResource, '/products', '/products/<int:product_id>')
+api.add_resource(SupplierResource, '/suppliers', '/suppliers/<int:supplier_id>')
+api.add_resource(TransactionResource, '/transactions', '/transactions/<int:transaction_id>')
+api.add_resource(OrderResource, '/orders', '/orders/<int:order_id>')
+api.add_resource(UserResource, '/users', '/users/<int:user_id>')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5555, debug=True)
