@@ -1,24 +1,26 @@
-"""${message}
+"""Add your migration message here
 
-Revision ID: ${up_revision}
-Revises: ${down_revision | comma,n}
-Create Date: ${create_date}
+Revision ID: '12345'
+Revises: 'previous_revision_id'
+Create Date: '2024-07-14'
 
 """
 from alembic import op
 import sqlalchemy as sa
-${imports if imports else ""}
 
 # revision identifiers, used by Alembic.
-revision = ${repr(up_revision)}
-down_revision = ${repr(down_revision)}
-branch_labels = ${repr(branch_labels)}
-depends_on = ${repr(depends_on)}
-
+revision = '12345'
+down_revision = 'previous_revision_id'
+branch_labels = None
+depends_on = None
 
 def upgrade():
-    ${upgrades if upgrades else "pass"}
-
+    # Add your upgrade operations here
+    op.add_column('products', sa.Column('supplier', sa.String(length=255), nullable=True))
+    op.add_column('products', sa.Column('sku', sa.String(length=255), nullable=True))
+    op.add_column('products', sa.Column('quantity', sa.Integer(length=255), nullable=True))
 
 def downgrade():
-    ${downgrades if downgrades else "pass"}
+    # Add your downgrade operations here
+    op.drop_column('products', 'suppliers_id')
+    op.drop_column('products', 'date')

@@ -62,6 +62,6 @@ def downgrade():
                type_=sa.VARCHAR(),
                existing_nullable=True)
 
-    op.drop_table('orders')
+    # op.drop_table('orders')
     op.drop_table('users')
     # ### end Alembic commands ###

@@ -7,20 +7,6 @@ from config import db
 
 bcrypt = Bcrypt()
 
-class Supplier(db.Model, SerializerMixin):
-    __tablename__ = 'suppliers'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    description = db.Column(db.String)
-    date = db.Column(DateTime, default=datetime.utcnow)
-
-    products = relationship('Product', back_populates='supplier')
-
-    serialize_rules = ('-products',)
-
-    def __repr__(self):
-        return f'<Supplier {self.id}, {self.name}, {self.description}, {self.date}>'
-
 class Product(db.Model, SerializerMixin):
     __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,23 +38,6 @@ class Transaction(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f'<Transaction {self.id}, {self.quantity}, {self.product_id}, {self.date}>'
-
-class Order(db.Model, SerializerMixin):
-    __tablename__ = 'orders'
-
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String)
-    quantity = db.Column(db.Integer)
-    price = db.Column(Numeric(10, 2))
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    date_received = db.Column(DateTime, default=datetime.utcnow)
-
-    product = relationship('Product', back_populates="orders")
-
-    serialize_rules = ('-product',)
-
-    def __repr__(self):
-        return f'<Order {self.description}, Quantity: {self.quantity}, received on {self.date_received}>'
 
 class User(db.Model, SerializerMixin):
     __tablename__ = "users"
