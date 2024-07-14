@@ -45,12 +45,19 @@ class ProductResource(Resource):
                 supplier_id=data["supplier_id"],
                 date=data["date"]
             )
-
             db.session.add(new_product)
             db.session.commit()
             return jsonify(new_product.to_dict()), 201
         except Exception as e:
             return {'error': str(e)}, 400
+
+    def delete(self, product_id):
+        product = Product.query.get(product_id)
+        if product:
+            db.session.delete(product)
+            db.session.commit()
+            return {'message': 'Product deleted'}, 200
+        return {'error': 'Product not found'}, 404
 
 class SupplierResource(Resource):
     def get(self, supplier_id=None):
@@ -70,12 +77,19 @@ class SupplierResource(Resource):
                 description=data["description"],
                 date=data["date"]
             )
-
             db.session.add(new_supplier)
             db.session.commit()
             return jsonify(new_supplier.to_dict()), 201
         except Exception as e:
             return {'error': str(e)}, 400
+
+    def delete(self, supplier_id):
+        supplier = Supplier.query.get(supplier_id)
+        if supplier:
+            db.session.delete(supplier)
+            db.session.commit()
+            return {'message': 'Supplier deleted'}, 200
+        return {'error': 'Supplier not found'}, 404
 
 class TransactionResource(Resource):
     def get(self, transaction_id=None):
@@ -95,12 +109,19 @@ class TransactionResource(Resource):
                 product_id=data["product_id"],
                 date=data["date"]
             )
-
             db.session.add(new_transaction)
             db.session.commit()
             return jsonify(new_transaction.to_dict()), 201
         except Exception as e:
             return {'error': str(e)}, 400
+
+    def delete(self, transaction_id):
+        transaction = Transaction.query.get(transaction_id)
+        if transaction:
+            db.session.delete(transaction)
+            db.session.commit()
+            return {'message': 'Transaction deleted'}, 200
+        return {'error': 'Transaction not found'}, 404
 
 class OrderResource(Resource):
     def get(self, order_id=None):
@@ -122,12 +143,19 @@ class OrderResource(Resource):
                 product_id=data["product_id"],
                 date_received=data["date_received"]
             )
-
             db.session.add(new_order)
             db.session.commit()
             return jsonify(new_order.to_dict()), 201
         except Exception as e:
             return {'error': str(e)}, 400
+
+    def delete(self, order_id):
+        order = Order.query.get(order_id)
+        if order:
+            db.session.delete(order)
+            db.session.commit()
+            return {'message': 'Order deleted'}, 200
+        return {'error': 'Order not found'}, 404
 
 class UserResource(Resource):
     def get(self, user_id=None):
@@ -153,6 +181,14 @@ class UserResource(Resource):
             return jsonify(new_user.to_dict()), 201
         except Exception as e:
             return {'error': str(e)}, 400
+
+    def delete(self, user_id):
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return {'message': 'User deleted'}, 200
+        return {'error': 'User not found'}, 404
 
 api.add_resource(ProductResource, '/products', '/products/<int:product_id>')
 api.add_resource(SupplierResource, '/suppliers', '/suppliers/<int:supplier_id>')
