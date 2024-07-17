@@ -1,21 +1,15 @@
-#!/usr/bin/env python3
-
-from app import app
+from datetime import datetime
 from faker import Faker
-import datetime
-from models import db, Product, Transaction, User
-from flask_bcrypt import Bcrypt
+from config import app, db
+from models import User
+from models import bcrypt
 
-bcrypt = Bcrypt()
-
-with app.app_context():
+def seed_data():
     fake = Faker()
     print("Starting seed...")
     
     # Delete all records/rows in the tables
-    Product.query.delete()
-    Transaction.query.delete()
-    User.query.delete()
+    db.session.query(User).delete()
     
     # Seed Users
     users = [
@@ -29,24 +23,6 @@ with app.app_context():
     db.session.add_all(users)
     db.session.commit()
 
-    # Seed Products
-    products = [
-        Product(name=fake.word(), sku=fake.uuid4(), description=fake.sentence(), quantity=fake.random_int(min=1, max=100), price=fake.random_number(digits=4, fix_len=True), supplier_id=fake.random_int(min=1, max=10), date=datetime.datetime.now()),
-        Product(name=fake.word(), sku=fake.uuid4(), description=fake.sentence(), quantity=fake.random_int(min=1, max=100), price=fake.random_number(digits=4, fix_len=True), supplier_id=fake.random_int(min=1, max=10), date=datetime.datetime.now() - datetime.timedelta(days=30)),
-        Product(name=fake.word(), sku=fake.uuid4(), description=fake.sentence(), quantity=fake.random_int(min=1, max=100), price=fake.random_number(digits=4, fix_len=True), supplier_id=fake.random_int(min=1, max=10), date=datetime.datetime.now() - datetime.timedelta(days=60))
-    ]
-    
-    db.session.add_all(products)
-    db.session.commit()
-    
-    # Seed Transactions
-    transactions = [
-        Transaction(user_id=users[0].id, product_id=products[0].id, quantity=fake.random_int(min=1, max=100), total_price=fake.random_number(digits=5, fix_len=True), type='purchase', date=datetime.datetime.now()),
-        Transaction(user_id=users[1].id, product_id=products[1].id, quantity=fake.random_int(min=1, max=100), total_price=fake.random_number(digits=5, fix_len=True), type='purchase', date=datetime.datetime.now() - datetime.timedelta(days=30)),
-        Transaction(user_id=users[0].id, product_id=products[2].id, quantity=fake.random_int(min=1, max=100), total_price=fake.random_number(digits=5, fix_len=True), type='purchase', date=datetime.datetime.now() - datetime.timedelta(days=60))
-    ]
-    
-    db.session.add_all(transactions)
-    db.session.commit()
-
-    print("Database seeded successfully!")
+if _name_ == '_main_':
+    with app.app_context():
+        seed_data()
