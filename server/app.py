@@ -56,7 +56,8 @@ def delete_product(id):
     product = Product.query.get_or_404(id)
     db.session.delete(product)
     db.session.commit()
-    return '', 204
+    return jsonify({"message": f"Product {id} has been successfully deleted"}), 200
+
 
 #transactions
 @app.route('/transactions', methods=['GET'])
@@ -98,8 +99,8 @@ def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     db.session.delete(transaction)
     db.session.commit()
-    return '', 204
-
+    #added transaction message to console after delete
+    return jsonify({"message": f"Transaction {id} has been successfully deleted"}), 200
 
 #users
 @app.route("/users", methods=["GET"])
@@ -114,7 +115,7 @@ def users():
         users = User.query.all()
         return jsonify([user.serialize for user in users])
     elif request.method == 'POST':
-        # Create a new user
+        # Creates a new user
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
@@ -149,7 +150,7 @@ def register():
 
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "User already exists"}), 400
-
+    
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(email=email, password=hashed_password)
     db.session.add(new_user)
