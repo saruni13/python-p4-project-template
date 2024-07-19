@@ -7,7 +7,8 @@ Timothy Saruni
 Adida Barack
 Stacy Kimilu
 Obala Steve
-Liz Wachira 6.Kevin Kipkosgei
+Liz Wachira 
+Kevin Kipkosgei
 Description
 Welcome to InventorGuard, a cutting-edge inventory management solution meticulously engineered to revolutionize how businesses handle their product inventories. Our platform is finely crafted to optimize every facet of inventory operations, offering seamless product management capabilities including detailed editing, deletion, and monitoring of items with comprehensive insights into quantities, pricing, and supplier details. Stay ahead with real-time stock tracking and proactive alerts for low-stock items, ensuring uninterrupted operations. With a robust user registration and authentication system ensuring secure access, InventorGuard empowers enterprises of all sizes. Whether you're a burgeoning startup or a seasoned corporation, harness the power of InventorGuard to efficiently track, manage, and optimize your inventory operations with unparalleled ease and precision.
 
