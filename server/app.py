@@ -12,7 +12,8 @@ migrate = Migrate(app, db)
 @app.route('/')
 def index():
     return '<h1>Project Group 5</h1>'
-# Products
+
+# Products 
 @app.route('/products', methods=['GET'])
 def get_products():
     products = Product.query.all()
@@ -51,6 +52,31 @@ def update_product(id):
     db.session.commit()
     return jsonify(product.to_dict())
 
+#PATCH works-Prod
+@app.route('/products/<int:id>', methods=['PATCH'])
+def update_product(id):
+    data = request.get_json()
+    product = Product.query.get_or_404(id)
+    
+    # Only update fields that are provided in the request body
+    if 'name' in data:
+        product.name = data['name']
+    if 'sku' in data:
+        product.sku = data['sku']
+    if 'description' in data:
+        product.description = data['description']
+    if 'quantity' in data:
+        product.quantity = data['quantity']
+    if 'price' in data:
+        product.price = data['price']
+    if 'supplier' in data:
+        product.supplier = data['supplier']
+    
+    db.session.add(product)
+    db.session.commit()
+    return jsonify(product.to_dict()), 200
+
+#Delete works -Prod
 @app.route('/products/<int:id>', methods=['DELETE'])
 def delete_product(id):
     product = Product.query.get_or_404(id)
@@ -59,16 +85,12 @@ def delete_product(id):
     return jsonify({"message": f"Product {id} has been successfully deleted"}), 200
 
 
-#transactions
+#all transactions resources work
 @app.route('/transactions', methods=['GET'])
 def get_transactions():
     transactions = Transaction.query.all()
     return jsonify([transaction.to_dict() for transaction in transactions])
 
-@app.route('/transactions/<int:id>', methods=['GET'])
-def get_transaction(id):
-    transaction = Transaction.query.get_or_404(id)
-    return jsonify(transaction.to_dict())
 
 @app.route('/transactions', methods=['POST'])
 def create_transaction():
@@ -81,18 +103,44 @@ def create_transaction():
     )
     db.session.add(new_transaction)
     db.session.commit()
-    return jsonify(new_transaction.to_dict()), 201
+    return jsonify({
+        "message": "Transaction has been successfully created",
+        "transaction": new_transaction.to_dict()
+    }), 201
+
+
 
 @app.route('/transactions/<int:id>', methods=['PUT'])
-def update_transaction(id):
+def edit_transaction(id):
     data = request.get_json()
     transaction = Transaction.query.get_or_404(id)
     transaction.user_id = data['user_id']
     transaction.product_id = data['product_id']
     transaction.quantity = data['quantity']
     transaction.total_price = data['total_price']
+    db.session.add(transaction)
     db.session.commit()
-    return jsonify(transaction.to_dict())
+    return jsonify(transaction.to_dict()), 200
+
+@app.route('/transactions/<int:id>', methods=['PATCH'])
+def update_transaction(id):
+    data = request.get_json()
+    transaction = Transaction.query.get_or_404(id)
+    
+    # Only update fields that are provided in the request body
+    if 'user_id' in data:
+        transaction.user_id = data['user_id']
+    if 'product_id' in data:
+        transaction.product_id = data['product_id']
+    if 'quantity' in data:
+        transaction.quantity = data['quantity']
+    if 'total_price' in data:
+        transaction.total_price = data['total_price']
+    
+    db.session.add(transaction)
+    db.session.commit()
+    return jsonify(transaction.to_dict()), 200
+
 
 @app.route('/transactions/<int:id>', methods=['DELETE'])
 def delete_transaction(id):
@@ -102,7 +150,13 @@ def delete_transaction(id):
     #added transaction message to console after delete
     return jsonify({"message": f"Transaction {id} has been successfully deleted"}), 200
 
-#users
+@app.route('/transactions/<int:id>', methods=['GET'])
+def get_transaction(id):
+    transaction = Transaction.query.get_or_404(id)
+    return jsonify(transaction.to_dict())
+
+
+#users resource works
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
